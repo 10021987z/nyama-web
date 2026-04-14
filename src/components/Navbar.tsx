@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { LanguageSwitcher, useLanguage } from "@/lib/i18n";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md card-shadow">
@@ -22,26 +24,27 @@ export default function Navbar() {
               href="/"
               className="text-charcoal hover:text-orange-500 transition-colors font-medium"
             >
-              Accueil
+              {t("home")}
             </Link>
             <Link
               href="/devenir-partenaire"
               className="text-charcoal hover:text-orange-500 transition-colors font-medium"
             >
-              Devenir partenaire
+              {t("become_partner")}
             </Link>
             <Link
               href="/devenir-livreur"
               className="text-charcoal hover:text-orange-500 transition-colors font-medium"
             >
-              Devenir livreur
+              {t("become_rider")}
             </Link>
             <Link
               href="/admin/login"
               className="bg-forest-500 text-white px-5 py-2 rounded-btn font-medium hover:bg-forest-600 transition-colors"
             >
-              Espace Admin
+              {t("admin_space")}
             </Link>
+            <LanguageSwitcher />
           </div>
 
           {/* Mobile toggle */}
@@ -83,29 +86,32 @@ export default function Navbar() {
               className="block text-charcoal hover:text-orange-500 transition-colors font-medium py-2"
               onClick={() => setMobileOpen(false)}
             >
-              Accueil
+              {t("home")}
             </Link>
             <Link
               href="/devenir-partenaire"
               className="block text-charcoal hover:text-orange-500 transition-colors font-medium py-2"
               onClick={() => setMobileOpen(false)}
             >
-              Devenir partenaire
+              {t("become_partner")}
             </Link>
             <Link
               href="/devenir-livreur"
               className="block text-charcoal hover:text-orange-500 transition-colors font-medium py-2"
               onClick={() => setMobileOpen(false)}
             >
-              Devenir livreur
+              {t("become_rider")}
             </Link>
             <Link
               href="/admin/login"
               className="block bg-forest-500 text-white px-5 py-2 rounded-btn font-medium text-center hover:bg-forest-600 transition-colors"
               onClick={() => setMobileOpen(false)}
             >
-              Espace Admin
+              {t("admin_space")}
             </Link>
+            <div className="pt-2">
+              <LanguageSwitcher className="w-full" />
+            </div>
           </div>
         )}
       </div>

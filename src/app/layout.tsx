@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, DM_Sans, Space_Mono } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "@/lib/i18n";
 
 const dmSerif = DM_Serif_Display({
   weight: "400",
@@ -46,7 +47,7 @@ export default function RootLayout({
       <body
         className={`${dmSerif.variable} ${dmSans.variable} ${spaceMono.variable} font-sans antialiased`}
       >
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );
