@@ -45,6 +45,22 @@ export default function Footer() {
                   Espace Admin
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/help"
+                  className="hover:text-orange-400 transition-colors"
+                >
+                  Aide & Support
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/cgu"
+                  className="hover:text-orange-400 transition-colors"
+                >
+                  Conditions d&apos;utilisation
+                </Link>
+              </li>
             </ul>
           </div>
 
