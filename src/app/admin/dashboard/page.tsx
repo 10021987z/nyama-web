@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -47,6 +46,17 @@ type StatusFilter = "all" | "pending" | "under_review" | "approved" | "rejected"
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("nyama_admin_token");
+}
+
+const DASHBOARD_SSO_URL = "https://nyama-dashboard.vercel.app";
+
+function openDashboardWithSso() {
+  if (typeof window === "undefined") return;
+  const token = getToken();
+  const url = token
+    ? `${DASHBOARD_SSO_URL}/admin/handoff#token=${encodeURIComponent(token)}`
+    : DASHBOARD_SSO_URL;
+  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 async function apiFetch(path: string, options?: RequestInit) {
@@ -313,16 +323,15 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="p-3 space-y-1">
-          <Link
-            href="https://nyama-dashboard.vercel.app"
-            target="_blank"
-            className="flex items-center gap-3 px-4 py-3 rounded-btn text-forest-200 hover:bg-white/10 transition-colors"
+          <button
+            onClick={openDashboardWithSso}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-btn text-forest-200 hover:bg-white/10 transition-colors text-left"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
             Dashboard principal
-          </Link>
+          </button>
 
           <button
             onClick={logout}
@@ -591,13 +600,12 @@ export default function AdminDashboard() {
               )}
               <p className="text-charcoal/50 text-sm">
                 La gestion détaillée des litiges est disponible sur le{" "}
-                <a
-                  href="https://nyama-dashboard.vercel.app"
-                  target="_blank"
+                <button
+                  onClick={openDashboardWithSso}
                   className="text-forest-500 underline"
                 >
                   dashboard principal
-                </a>
+                </button>
                 .
               </p>
             </div>
