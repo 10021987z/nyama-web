@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useLanguage } from "@/lib/i18n";
 
 const specialties = [
   {
@@ -36,54 +39,62 @@ const specialties = [
   },
 ];
 
-const whyJoin = [
-  {
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-      </svg>
-    ),
-    title: "Visibilité maximale",
-    desc: "Touchez des milliers de clients dans votre ville grâce à notre marketplace.",
-  },
-  {
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-    title: "Revenus garantis",
-    desc: "Paiements sécurisés via Orange Money et MTN MoMo. Virements réguliers.",
-  },
-  {
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-      </svg>
-    ),
-    title: "App Pro dédiée",
-    desc: "Gérez vos commandes, votre menu et vos horaires depuis l'application NYAMA Pro.",
-  },
-  {
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
-    title: "Paiements Mobile Money",
-    desc: "Orange Money, MTN MoMo ou paiement à la livraison. Flexibilité totale.",
-  },
+const whyJoinIcons = [
+  (
+    <svg key="eye" className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+  ),
+  (
+    <svg key="money" className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  (
+    <svg key="phone" className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+    </svg>
+  ),
+  (
+    <svg key="shield" className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+  ),
 ];
 
-const stats = [
-  { value: "15+", label: "Cuisinières" },
-  { value: "50+", label: "Plats" },
-  { value: "3", label: "Villes" },
-  { value: "24/7", label: "Support" },
-];
+const whyJoinContent = {
+  fr: [
+    { title: "Visibilité maximale", desc: "Touchez des milliers de clients dans votre ville grâce à notre marketplace." },
+    { title: "Revenus garantis", desc: "Paiements sécurisés via Orange Money et MTN MoMo. Virements réguliers." },
+    { title: "App Pro dédiée", desc: "Gérez vos commandes, votre menu et vos horaires depuis l'application NYAMA Pro." },
+    { title: "Paiements Mobile Money", desc: "Orange Money, MTN MoMo ou paiement à la livraison. Flexibilité totale." },
+  ],
+  en: [
+    { title: "Maximum visibility", desc: "Reach thousands of customers in your city through our marketplace." },
+    { title: "Guaranteed income", desc: "Secure payments via Orange Money and MTN MoMo. Regular transfers." },
+    { title: "Dedicated Pro app", desc: "Manage your orders, menu and schedule from the NYAMA Pro app." },
+    { title: "Mobile Money payments", desc: "Orange Money, MTN MoMo or cash on delivery. Full flexibility." },
+  ],
+  pidgin: [
+    { title: "Plenty eye go see you", desc: "Plenty customer for ya town go sabi ya chop." },
+    { title: "Moni go sure", desc: "Secure pay for Orange Money and MTN MoMo. We go send moni regular." },
+    { title: "NYAMA Pro app", desc: "Manage orders, menu and time for di app." },
+    { title: "Mobile Money pay", desc: "Orange Money, MTN MoMo or cash wen chop reach." },
+  ],
+} as const;
 
 export default function Home() {
+  const { lang, t } = useLanguage();
+  const whyJoin = whyJoinContent[lang] ?? whyJoinContent.fr;
+
+  const stats = [
+    { value: "15+", label: t("stat_cooks") },
+    { value: "50+", label: t("stat_dishes") },
+    { value: "3", label: t("stat_cities") },
+    { value: "24/7", label: t("stat_support") },
+  ];
+
   return (
     <main className="min-h-screen">
       <Navbar />
@@ -103,10 +114,10 @@ export default function Home() {
 
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <h1 className="font-serif text-4xl sm:text-5xl lg:text-[56px] text-white leading-tight mb-6">
-            Vos plats préférés livrés chez vous
+            {t("hero_title")}
           </h1>
           <p className="text-xl sm:text-2xl text-forest-100 mb-4">
-            La première marketplace de cuisine camerounaise
+            {t("hero_subtitle")}
           </p>
           <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm text-white px-6 py-2 rounded-full text-sm mb-10">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -119,14 +130,14 @@ export default function Home() {
               href="#specialites"
               className="bg-orange-500 text-white px-8 py-4 rounded-btn text-lg font-semibold hover:bg-orange-600 transition-colors"
             >
-              Commander maintenant
+              {t("order_now")}
             </a>
             <Link
               href="/devenir-partenaire"
               className="bg-transparent text-white px-8 py-4 rounded-btn text-lg font-semibold hover:bg-white/10 transition-colors"
               style={{ border: "2px solid rgba(255,255,255,0.5)" }}
             >
-              Devenir partenaire
+              {t("become_partner")}
             </Link>
           </div>
         </div>
@@ -150,11 +161,10 @@ export default function Home() {
       <section id="specialites" className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-serif text-3xl sm:text-4xl text-charcoal text-center mb-4">
-            Découvrez nos spécialités
+            {t("specialties_title")}
           </h2>
           <p className="text-center text-charcoal/60 mb-12 max-w-xl mx-auto">
-            Des plats authentiques préparés avec amour par les meilleures
-            cuisinières du Cameroun.
+            {t("specialties_subtitle")}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {specialties.map((dish) => (
@@ -188,20 +198,19 @@ export default function Home() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-serif text-3xl sm:text-4xl text-charcoal text-center mb-4">
-            Pourquoi rejoindre Nyama
+            {t("why_title")}
           </h2>
           <p className="text-center text-charcoal/60 mb-12 max-w-xl mx-auto">
-            Nous offrons aux cuisinières et livreurs les meilleurs outils pour
-            réussir.
+            {t("why_subtitle")}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {whyJoin.map((item) => (
+            {whyJoin.map((item, i) => (
               <div
                 key={item.title}
                 className="bg-background rounded-card p-6 card-shadow hover:card-shadow-hover transition-shadow text-center"
               >
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-orange-50 text-orange-500 mb-4">
-                  {item.icon}
+                  {whyJoinIcons[i]}
                 </div>
                 <h3 className="font-semibold text-lg text-charcoal mb-2">
                   {item.title}
@@ -217,7 +226,7 @@ export default function Home() {
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <h2 className="font-serif text-3xl sm:text-4xl text-charcoal text-center mb-12">
-            Ils nous font confiance
+            {t("trust_title")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Link
@@ -233,13 +242,13 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="relative z-10 p-8 text-white">
                 <h3 className="font-serif text-2xl sm:text-3xl mb-2">
-                  Collaborez avec nous
+                  {t("partner_cta_title")}
                 </h3>
                 <p className="text-white/80 mb-4">
-                  Développez votre activité culinaire avec NYAMA
+                  {t("partner_cta_desc")}
                 </p>
                 <span className="inline-flex items-center gap-2 bg-orange-500 px-6 py-3 rounded-btn font-semibold hover:bg-orange-600 transition-colors">
-                  Devenir partenaire
+                  {t("become_partner")}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -260,13 +269,13 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="relative z-10 p-8 text-white">
                 <h3 className="font-serif text-2xl sm:text-3xl mb-2">
-                  Roulez avec nous
+                  {t("rider_cta_title")}
                 </h3>
                 <p className="text-white/80 mb-4">
-                  Devenez livreur et gagnez votre vie
+                  {t("rider_cta_desc")}
                 </p>
                 <span className="inline-flex items-center gap-2 bg-gold px-6 py-3 rounded-btn font-semibold text-white hover:bg-gold-600 transition-colors">
-                  Devenir livreur
+                  {t("become_rider")}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
