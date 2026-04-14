@@ -139,26 +139,112 @@ export default function AdminDashboard() {
     }
   }, [tab, statusFilter, loadPartnerships]);
 
-  async function handleAction(id: string, status: string) {
+  const [approval, setApproval] = useState<{
+    accessCode: string;
+    email?: string;
+    name: string;
+  } | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<Partnership | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  async function handleApprove(p: Partnership) {
     setActionLoading(true);
+    setActionError("");
     try {
-      await apiFetch(`/admin/partnerships/${id}`, {
+      const res = await apiFetch(`/admin/partnerships/${p.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ status, adminNotes: adminNotes || undefined }),
+        body: JSON.stringify({
+          status: "approved",
+          adminNotes: adminNotes || undefined,
+        }),
       });
       setSelectedPartnership(null);
       setAdminNotes("");
+      if (res?.accessCode) {
+        setApproval({
+          accessCode: res.accessCode,
+          email: res.user?.email ?? p.email ?? undefined,
+          name: `${p.firstName} ${p.lastName}`.trim(),
+        });
+      }
       await Promise.all([loadStats(), loadPartnerships()]);
-    } catch {
-      // silently handle
+    } catch (err: unknown) {
+      setActionError(
+        err instanceof Error ? err.message : "Erreur lors de l'approbation"
+      );
     } finally {
       setActionLoading(false);
     }
   }
 
+  function openReject(p: Partnership) {
+    setRejectTarget(p);
+    setRejectReason("");
+    setActionError("");
+  }
+
+  async function confirmReject() {
+    if (!rejectTarget || !rejectReason.trim()) return;
+    setActionLoading(true);
+    setActionError("");
+    try {
+      await apiFetch(`/admin/partnerships/${rejectTarget.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: "rejected",
+          adminNotes: rejectReason.trim(),
+        }),
+      });
+      setRejectTarget(null);
+      setSelectedPartnership(null);
+      setAdminNotes("");
+      setRejectReason("");
+      await Promise.all([loadStats(), loadPartnerships()]);
+    } catch (err: unknown) {
+      setActionError(
+        err instanceof Error ? err.message : "Erreur lors du rejet"
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  const [adminName, setAdminName] = useState<string>("Administrateur");
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("nyama_admin_user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u?.displayName) setAdminName(u.displayName);
+        else if (u?.username) setAdminName(u.username);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   function logout() {
     localStorage.removeItem("nyama_admin_token");
+    localStorage.removeItem("nyama_admin_user");
+    document.cookie = "admin-token=; path=/; max-age=0; SameSite=Lax";
     router.push("/admin/login");
+  }
+
+  const [copiedCode, setCopiedCode] = useState(false);
+  useEffect(() => {
+    setCopiedCode(false);
+  }, [approval]);
+
+  async function copyCode() {
+    if (!approval) return;
+    try {
+      await navigator.clipboard.writeText(approval.accessCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      // ignore
+    }
   }
 
   return (
@@ -252,12 +338,19 @@ export default function AdminDashboard() {
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-        {/* Mobile header */}
-        <div className="lg:hidden bg-white card-shadow px-4 py-3 flex items-center justify-between">
-          <span className="text-xl font-serif text-orange-500 font-bold">
-            NYAMA
-          </span>
-          <div className="flex gap-2">
+        {/* Shared admin header (desktop + mobile) */}
+        <div className="bg-white card-shadow px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xl font-serif text-orange-500 font-bold shrink-0">
+              NYAMA
+            </span>
+            <span className="hidden sm:inline text-xs text-charcoal/40 uppercase tracking-wider">
+              Administration
+            </span>
+          </div>
+
+          {/* Mobile tabs */}
+          <div className="lg:hidden flex gap-2">
             {(["overview", "partnerships", "disputes"] as Tab[]).map((t) => (
               <button
                 key={t}
@@ -275,6 +368,18 @@ export default function AdminDashboard() {
                     : "Litiges"}
               </button>
             ))}
+          </div>
+
+          <div className="hidden lg:flex items-center gap-3">
+            <span className="text-sm font-medium text-charcoal truncate max-w-[160px]">
+              {adminName}
+            </span>
+            <button
+              onClick={logout}
+              className="text-xs font-medium text-charcoal/60 hover:text-charcoal px-3 py-1.5 rounded-btn hover:bg-background transition-colors"
+            >
+              Déconnexion
+            </button>
           </div>
         </div>
 
@@ -500,6 +605,113 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Approval success modal */}
+      {approval && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setApproval(null)}
+        >
+          <div
+            className="bg-white rounded-card w-full max-w-md p-6 card-shadow"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-serif text-lg text-charcoal">Partenaire approuvé !</h3>
+                <p className="text-xs text-charcoal/50">{approval.name}</p>
+              </div>
+            </div>
+            <div className="bg-orange-50 rounded-btn p-4 text-center mb-4">
+              <p className="text-xs font-medium text-charcoal/50 uppercase tracking-wider mb-1">
+                Code d&apos;accès
+              </p>
+              <p className="text-3xl font-bold text-orange-600 tracking-widest select-all">
+                {approval.accessCode}
+              </p>
+            </div>
+            <p className="text-sm text-charcoal/60 mb-1">
+              {approval.email
+                ? `Ce code a été envoyé par email à ${approval.email}.`
+                : "Aucun email enregistré — transmettez ce code manuellement."}
+            </p>
+            <p className="text-xs text-charcoal/50 mb-5">
+              Le partenaire peut maintenant se connecter à l&apos;application.
+              Ce code ne fonctionne qu&apos;une seule fois.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={copyCode}
+                className="flex-1 bg-forest-500 text-white py-2.5 rounded-btn font-medium hover:bg-forest-600 transition-colors"
+              >
+                {copiedCode ? "Copié !" : "Copier le code"}
+              </button>
+              <button
+                onClick={() => setApproval(null)}
+                className="flex-1 py-2.5 rounded-btn font-medium text-charcoal/60 hover:bg-background transition-colors border border-charcoal/10"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection modal */}
+      {rejectTarget && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setRejectTarget(null)}
+        >
+          <div
+            className="bg-white rounded-card w-full max-w-md p-6 card-shadow"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-serif text-lg text-charcoal mb-1">
+              Rejeter la candidature
+            </h3>
+            <p className="text-xs text-charcoal/50 mb-4">
+              {rejectTarget.firstName} {rejectTarget.lastName}
+            </p>
+            <label className="block text-sm font-medium text-charcoal mb-1.5">
+              Raison du rejet (visible par le candidat)
+            </label>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={4}
+              placeholder="Documents incomplets, zone non couverte, etc."
+              className="w-full px-3 py-2 rounded-btn bg-background text-charcoal text-sm focus:outline-none focus:ring-2 focus:ring-red-500/30 resize-none"
+            />
+            {actionError && (
+              <div className="mt-3 bg-red-50 text-red-600 px-3 py-2 rounded-btn text-sm">
+                {actionError}
+              </div>
+            )}
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => setRejectTarget(null)}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 rounded-btn font-medium text-charcoal/60 hover:bg-background transition-colors border border-charcoal/10"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={confirmReject}
+                disabled={!rejectReason.trim() || actionLoading}
+                className="flex-1 bg-red-600 text-white py-2.5 rounded-btn font-medium hover:bg-red-700 transition-colors disabled:opacity-60"
+              >
+                {actionLoading ? "Envoi…" : "Confirmer le rejet"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Partnership detail modal */}
       {selectedPartnership && (
         <div
@@ -600,22 +812,24 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {actionError && (
+              <div className="mt-4 bg-red-50 text-red-600 px-3 py-2 rounded-btn text-sm">
+                {actionError}
+              </div>
+            )}
+
             {/* Actions */}
             {selectedPartnership.status === "pending" && (
               <div className="flex gap-3 mt-6">
                 <button
-                  onClick={() =>
-                    handleAction(selectedPartnership.id, "approved")
-                  }
+                  onClick={() => handleApprove(selectedPartnership)}
                   disabled={actionLoading}
                   className="flex-1 bg-green-600 text-white py-2.5 rounded-btn font-medium hover:bg-green-700 transition-colors disabled:opacity-60"
                 >
                   Approuver
                 </button>
                 <button
-                  onClick={() =>
-                    handleAction(selectedPartnership.id, "rejected")
-                  }
+                  onClick={() => openReject(selectedPartnership)}
                   disabled={actionLoading}
                   className="flex-1 bg-red-600 text-white py-2.5 rounded-btn font-medium hover:bg-red-700 transition-colors disabled:opacity-60"
                 >

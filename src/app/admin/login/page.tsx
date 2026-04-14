@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const DASHBOARD_URL =
+  process.env.NEXT_PUBLIC_ADMIN_AUTH_URL ??
+  "https://nyama-dashboard.vercel.app";
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
 export default function AdminLogin() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -41,10 +43,10 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const res = await fetch(`${API_URL}/auth/admin/login`, {
+      const res = await fetch(`${DASHBOARD_URL}/api/v1/auth/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       if (!res.ok) {
@@ -69,7 +71,17 @@ export default function AdminLogin() {
       }
 
       const data = await res.json();
-      localStorage.setItem("nyama_admin_token", data.access_token);
+      const token: string | undefined = data.accessToken ?? data.access_token;
+      if (!token) {
+        setError("Réponse invalide du serveur d'authentification.");
+        return;
+      }
+      localStorage.setItem("nyama_admin_token", token);
+      if (data.user) {
+        localStorage.setItem("nyama_admin_user", JSON.stringify(data.user));
+      }
+      // Cookie pour les routes server-side éventuelles
+      document.cookie = `admin-token=${token}; path=/; max-age=${2 * 3600}; SameSite=Lax${window.location.protocol === "https:" ? "; Secure" : ""}`;
       localStorage.removeItem("nyama_login_attempts");
       localStorage.removeItem("nyama_login_locked");
       router.push("/admin/dashboard");
@@ -98,8 +110,9 @@ export default function AdminLogin() {
               </label>
               <input
                 type="text"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
                 required
                 disabled={isLocked}
                 className="w-full px-4 py-3 rounded-btn bg-background text-charcoal focus:outline-none focus:ring-2 focus:ring-forest-500/30 transition-shadow disabled:opacity-50"
