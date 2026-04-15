@@ -376,6 +376,14 @@ export default function AdminDashboard() {
           </div>
 
           <div className="hidden lg:flex items-center gap-3">
+            <a
+              href="https://nyama-dashboard.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold text-orange-500 hover:text-orange-600 px-3 py-1.5 rounded-btn border border-orange-200 hover:bg-orange-50 transition-colors inline-flex items-center gap-1"
+            >
+              Dashboard complet →
+            </a>
             <span className="text-sm font-medium text-charcoal truncate max-w-[160px]">
               {adminName}
             </span>
