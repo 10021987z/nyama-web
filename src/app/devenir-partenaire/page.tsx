@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LocationSelector from "@/components/LocationSelector";
 import CountryCodeSelect from "@/components/CountryCodeSelect";
+import DocumentUploader from "@/components/DocumentUploader";
 import { COUNTRY_CODES, DEFAULT_COUNTRY } from "@/lib/country-codes";
 
 const API_URL =
@@ -23,6 +24,8 @@ export default function DevenirPartenaire() {
   const [city, setCity] = useState("");
   const [quarter, setQuarter] = useState("");
   const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY.iso);
+  const [idDocumentUrl, setIdDocumentUrl] = useState<string | null>(null);
+  const [kitchenPhotoUrl, setKitchenPhotoUrl] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,6 +34,14 @@ export default function DevenirPartenaire() {
 
     if (!city || !quarter) {
       setError("Veuillez sélectionner votre ville et votre quartier.");
+      setLoading(false);
+      return;
+    }
+
+    if (!idDocumentUrl || !kitchenPhotoUrl) {
+      setError(
+        "Merci de téléverser votre pièce d'identité et une photo de votre cuisine.",
+      );
       setLoading(false);
       return;
     }
@@ -53,6 +64,9 @@ export default function DevenirPartenaire() {
       description: description || undefined,
       city,
       quarter,
+      idDocumentUrl,
+      // La photo cuisine utilise le champ selfieUrl côté API
+      selfieUrl: kitchenPhotoUrl,
     };
 
     try {
@@ -287,6 +301,33 @@ export default function DevenirPartenaire() {
               className="w-full px-4 py-3 rounded-btn bg-background text-charcoal focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-shadow resize-none"
               placeholder="Décrivez vos spécialités, votre expérience..."
             />
+          </div>
+
+          {/* KYC Documents */}
+          <div className="pt-2 border-t border-charcoal/10">
+            <h2 className="font-serif text-xl text-charcoal mb-1">
+              Documents KYC
+            </h2>
+            <p className="text-sm text-charcoal/60 mb-5">
+              Nous avons besoin de deux pièces pour valider votre candidature.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <DocumentUploader
+                label="Pièce d'identité (CNI)"
+                hint="Recto-verso de la CNI"
+                required
+                accent="forest"
+                onUploaded={setIdDocumentUrl}
+              />
+              <DocumentUploader
+                label="Photo de la cuisine"
+                hint="Plan d'ensemble propre et lumineux"
+                required
+                accent="forest"
+                accept="image/jpeg,image/png"
+                onUploaded={setKitchenPhotoUrl}
+              />
+            </div>
           </div>
 
           {error && (

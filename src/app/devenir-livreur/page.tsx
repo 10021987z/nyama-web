@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LocationSelector from "@/components/LocationSelector";
 import CountryCodeSelect from "@/components/CountryCodeSelect";
+import DocumentUploader from "@/components/DocumentUploader";
 import { COUNTRY_CODES, DEFAULT_COUNTRY } from "@/lib/country-codes";
 
 const API_URL =
@@ -30,6 +31,10 @@ export default function DevenirLivreur() {
   const [quarter, setQuarter] = useState("");
   const [vehicleType, setVehicleType] = useState("moto");
   const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY.iso);
+  const [idDocumentUrl, setIdDocumentUrl] = useState<string | null>(null);
+  const [selfieUrl, setSelfieUrl] = useState<string | null>(null);
+  const [licenseUrl, setLicenseUrl] = useState<string | null>(null);
+  const [insuranceUrl, setInsuranceUrl] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,6 +43,14 @@ export default function DevenirLivreur() {
 
     if (!city || !quarter) {
       setError("Veuillez sélectionner votre ville et votre quartier.");
+      setLoading(false);
+      return;
+    }
+
+    if (!idDocumentUrl || !selfieUrl || !licenseUrl || !insuranceUrl) {
+      setError(
+        "Merci de téléverser les 4 documents (pièce d'identité, selfie, permis, assurance).",
+      );
       setLoading(false);
       return;
     }
@@ -59,6 +72,10 @@ export default function DevenirLivreur() {
       quarter,
       vehicleType,
       idNumber: trim(data.get("idNumber")),
+      idDocumentUrl,
+      selfieUrl,
+      licenseUrl,
+      insuranceUrl,
     };
 
     try {
@@ -267,6 +284,46 @@ export default function DevenirLivreur() {
               className="w-full px-4 py-3 rounded-btn bg-background text-charcoal focus:outline-none focus:ring-2 focus:ring-gold/30 transition-shadow"
               placeholder="Numéro de carte nationale d'identité"
             />
+          </div>
+
+          {/* KYC Documents */}
+          <div className="pt-2 border-t border-charcoal/10">
+            <h2 className="font-serif text-xl text-charcoal mb-1">
+              Documents KYC
+            </h2>
+            <p className="text-sm text-charcoal/60 mb-5">
+              Nous avons besoin de ces 4 pièces pour valider votre candidature.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <DocumentUploader
+                label="Pièce d'identité (CNI)"
+                hint="Recto-verso de la CNI"
+                required
+                accent="gold"
+                onUploaded={setIdDocumentUrl}
+              />
+              <DocumentUploader
+                label="Selfie avec la pièce d'identité"
+                hint="Visage visible + CNI tenue à côté"
+                required
+                accent="gold"
+                onUploaded={setSelfieUrl}
+              />
+              <DocumentUploader
+                label="Permis de conduire"
+                hint="Recto du permis"
+                required
+                accent="gold"
+                onUploaded={setLicenseUrl}
+              />
+              <DocumentUploader
+                label="Attestation d'assurance"
+                hint="Carte verte ou attestation"
+                required
+                accent="gold"
+                onUploaded={setInsuranceUrl}
+              />
+            </div>
           </div>
 
           {error && (
