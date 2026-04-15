@@ -4,8 +4,12 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LocationSelector from "@/components/LocationSelector";
+import CountryCodeSelect from "@/components/CountryCodeSelect";
+import { COUNTRY_CODES, DEFAULT_COUNTRY } from "@/lib/country-codes";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://nyama-api-production.up.railway.app/api/v1";
 
 const vehicleTypes = [
   { value: "moto", label: "Moto", emoji: "\uD83C\uDFCD\uFE0F" },
@@ -14,6 +18,10 @@ const vehicleTypes = [
   { value: "a_pied", label: "À pied", emoji: "\uD83D\uDEB6" },
 ];
 
+function trim(v: FormDataEntryValue | null): string {
+  return (v as string | null)?.toString().trim() ?? "";
+}
+
 export default function DevenirLivreur() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,25 +29,36 @@ export default function DevenirLivreur() {
   const [city, setCity] = useState("");
   const [quarter, setQuarter] = useState("");
   const [vehicleType, setVehicleType] = useState("moto");
+  const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY.iso);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
+    if (!city || !quarter) {
+      setError("Veuillez sélectionner votre ville et votre quartier.");
+      setLoading(false);
+      return;
+    }
+
     const form = e.currentTarget;
     const data = new FormData(form);
+    const country =
+      COUNTRY_CODES.find((c) => c.iso === countryIso) ?? DEFAULT_COUNTRY;
+    const phoneDigits = trim(data.get("phone")).replace(/[^0-9]/g, "");
+    const email = trim(data.get("email"));
 
     const body = {
       type: "livreur",
-      firstName: data.get("firstName") as string,
-      lastName: data.get("lastName") as string,
-      phone: data.get("phone") as string,
-      email: (data.get("email") as string) || undefined,
+      firstName: trim(data.get("firstName")),
+      lastName: trim(data.get("lastName")),
+      phone: `${country.code}${phoneDigits}`,
+      email: email || undefined,
       city,
       quarter,
       vehicleType,
-      idNumber: data.get("idNumber") as string,
+      idNumber: trim(data.get("idNumber")),
     };
 
     try {
@@ -51,8 +70,11 @@ export default function DevenirLivreur() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => null);
+        const msg = Array.isArray(err?.message)
+          ? err.message.join(" · ")
+          : err?.message;
         throw new Error(
-          err?.message || "Une erreur est survenue. Veuillez réessayer."
+          msg || `Erreur ${res.status} — veuillez réessayer.`,
         );
       }
 
@@ -158,14 +180,16 @@ export default function DevenirLivreur() {
                 Téléphone <span className="text-orange-500">*</span>
               </label>
               <div className="flex">
-                <span className="inline-flex items-center px-3 bg-gold-50 text-gold-700 text-sm font-medium rounded-l-btn">
-                  +237
-                </span>
+                <CountryCodeSelect
+                  value={countryIso}
+                  onChange={setCountryIso}
+                  accent="gold"
+                />
                 <input
                   type="tel"
                   name="phone"
                   required
-                  pattern="[0-9]{9}"
+                  pattern="[0-9 ]{6,15}"
                   className="flex-1 px-4 py-3 rounded-r-btn bg-background text-charcoal focus:outline-none focus:ring-2 focus:ring-gold/30 transition-shadow"
                   placeholder="6XX XXX XXX"
                 />

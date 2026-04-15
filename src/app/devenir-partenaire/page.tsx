@@ -4,8 +4,16 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LocationSelector from "@/components/LocationSelector";
+import CountryCodeSelect from "@/components/CountryCodeSelect";
+import { COUNTRY_CODES, DEFAULT_COUNTRY } from "@/lib/country-codes";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://nyama-api-production.up.railway.app/api/v1";
+
+function trim(v: FormDataEntryValue | null): string {
+  return (v as string | null)?.toString().trim() ?? "";
+}
 
 export default function DevenirPartenaire() {
   const [submitted, setSubmitted] = useState(false);
@@ -14,23 +22,35 @@ export default function DevenirPartenaire() {
   const [type, setType] = useState("cuisiniere");
   const [city, setCity] = useState("");
   const [quarter, setQuarter] = useState("");
+  const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY.iso);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
+    if (!city || !quarter) {
+      setError("Veuillez sélectionner votre ville et votre quartier.");
+      setLoading(false);
+      return;
+    }
+
     const form = e.currentTarget;
     const data = new FormData(form);
+    const country =
+      COUNTRY_CODES.find((c) => c.iso === countryIso) ?? DEFAULT_COUNTRY;
+    const phoneDigits = trim(data.get("phone")).replace(/[^0-9]/g, "");
+    const email = trim(data.get("email"));
+    const description = trim(data.get("description"));
 
     const body = {
       type,
-      firstName: data.get("firstName") as string,
-      lastName: data.get("lastName") as string,
-      phone: data.get("phone") as string,
-      email: data.get("email") as string,
-      companyName: data.get("companyName") as string,
-      description: data.get("description") as string,
+      firstName: trim(data.get("firstName")),
+      lastName: trim(data.get("lastName")),
+      phone: `${country.code}${phoneDigits}`,
+      email: email || undefined,
+      companyName: trim(data.get("companyName")) || undefined,
+      description: description || undefined,
       city,
       quarter,
     };
@@ -44,8 +64,11 @@ export default function DevenirPartenaire() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => null);
+        const msg = Array.isArray(err?.message)
+          ? err.message.join(" · ")
+          : err?.message;
         throw new Error(
-          err?.message || "Une erreur est survenue. Veuillez réessayer."
+          msg || `Erreur ${res.status} — veuillez réessayer.`,
         );
       }
 
@@ -186,14 +209,16 @@ export default function DevenirPartenaire() {
                 Téléphone <span className="text-orange-500">*</span>
               </label>
               <div className="flex">
-                <span className="inline-flex items-center px-3 bg-forest-50 text-forest-500 text-sm font-medium rounded-l-btn">
-                  +237
-                </span>
+                <CountryCodeSelect
+                  value={countryIso}
+                  onChange={setCountryIso}
+                  accent="forest"
+                />
                 <input
                   type="tel"
                   name="phone"
                   required
-                  pattern="[0-9]{9}"
+                  pattern="[0-9 ]{6,15}"
                   className="flex-1 px-4 py-3 rounded-r-btn bg-background text-charcoal focus:outline-none focus:ring-2 focus:ring-orange-500/30 transition-shadow"
                   placeholder="6XX XXX XXX"
                 />

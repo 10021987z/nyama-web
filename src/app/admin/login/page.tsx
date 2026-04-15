@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const DASHBOARD_URL =
-  process.env.NEXT_PUBLIC_ADMIN_AUTH_URL ??
-  "https://nyama-dashboard.vercel.app";
+// Route locale (proxy côté serveur) → évite le CORS avec le dashboard.
+const LOGIN_ENDPOINT = "/api/auth/admin/login";
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 15;
 
@@ -43,7 +42,7 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const res = await fetch(`${DASHBOARD_URL}/api/v1/auth/admin/login`, {
+      const res = await fetch(LOGIN_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
