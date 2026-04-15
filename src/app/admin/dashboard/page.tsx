@@ -48,15 +48,11 @@ function getToken(): string | null {
   return localStorage.getItem("nyama_admin_token");
 }
 
-const DASHBOARD_SSO_URL = "https://nyama-dashboard.vercel.app";
+const DASHBOARD_LOGIN_URL = "https://nyama-dashboard.vercel.app/login";
 
 function openDashboardWithSso() {
   if (typeof window === "undefined") return;
-  const token = getToken();
-  const url = token
-    ? `${DASHBOARD_SSO_URL}/admin/handoff#token=${encodeURIComponent(token)}`
-    : DASHBOARD_SSO_URL;
-  window.open(url, "_blank", "noopener,noreferrer");
+  window.open(DASHBOARD_LOGIN_URL, "_blank", "noopener,noreferrer");
 }
 
 async function apiFetch(path: string, options?: RequestInit) {
